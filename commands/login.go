@@ -39,6 +39,7 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "User authentication",
 	Run: func(cmd *cobra.Command, args []string) {
+		// Check if the user is already logged in and not forcing login
 		if config.IsLoggedIn() && !forceLogin {
 			alreadyLoggedIn := config.GetString(config.Username)
 			if len(alreadyLoggedIn) == 0 {
@@ -59,6 +60,7 @@ var loginCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
+		// Prompt for authentication method if not provided
 		if len(providedAuthenticationMethod) == 0 {
 			promptAuthenticationMethod()
 		}
@@ -67,6 +69,7 @@ var loginCmd = &cobra.Command{
 		var key string
 		var keyId string
 
+		// Perform login based on the selected authentication method
 		if providedAuthenticationMethod == "email" {
 			key, keyId = emailLogin(rest)
 		} else if providedAuthenticationMethod == "access-key" {
@@ -88,9 +91,11 @@ var loginCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		// Save the access key and key ID in the global configuration
 		config.SetGlobalConfig(config.AccessKey, key)
 		config.SetGlobalConfig(config.AccessKeyId, keyId)
 
+		// Fetch user information
 		principal, err := rest.User.Principal()
 		if err != nil {
 			if providedAuthenticationMethod == "access-key" {
@@ -111,6 +116,7 @@ var loginCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		// Save user information in the global configuration
 		config.SetGlobalConfig(config.AccountID, principal.ID)
 
 		if principal.Type == model.UserPrincipalType {
