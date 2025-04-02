@@ -118,7 +118,7 @@ var initCmd = &cobra.Command{
 				userError.LogErrorf(
 					"failed to load template",
 					userError.NewUserError(
-						err, fmt.Sprintf("Failed to load template %s", actionsTemplateName),
+						err, fmt.Sprintf("Failed to load template %s. Please check if the template name is correct and try again.", actionsTemplateName),
 					),
 				)
 				os.Exit(1)
@@ -142,9 +142,9 @@ var initCmd = &cobra.Command{
 				userError.LogErrorf(
 					"failed to load template specs",
 					userError.NewUserError(
-						err, fmt.Sprintf("Failed to load specs for template %s", actionsTemplateName),
+						err, fmt.Sprintf("Failed to load specs for template %s. Please check if the template specs are correct and try again.", actionsTemplateName),
 					),
-				)
+				),
 				os.Exit(1)
 			}
 		}
@@ -206,7 +206,7 @@ var initCmd = &cobra.Command{
 				userError.LogErrorf(
 					"failed to create from template",
 					userError.NewUserError(
-						err, fmt.Sprintf("Failed to create from template %s", actionsTemplateName),
+						err, fmt.Sprintf("Failed to create from template %s. Please check if the template is correct and try again.", actionsTemplateName),
 					),
 				)
 				os.Exit(1)
@@ -259,7 +259,7 @@ func promptTemplateArg(arg actionsModel.TemplateArg) string {
 			"value for template arg not entered",
 			userError.NewUserError(
 				errors.New("enter template arg"),
-				"Value for template arg not entered correctly",
+				"Value for template arg not entered correctly. Please enter a valid value.",
 			),
 		)
 		os.Exit(1)
@@ -273,7 +273,7 @@ func mustValidateFlags() {
 			"language not supported",
 			userError.NewUserError(
 				errors.New("language not supported"),
-				fmt.Sprintf("Language %s not supported", actionsLanguage),
+				fmt.Sprintf("Language %s not supported. Please choose either 'typescript' or 'javascript'.", actionsLanguage),
 			),
 		)
 		os.Exit(1)
@@ -287,7 +287,7 @@ func chooseSources() string {
 				"sources dir is file: %s",
 				userError.NewUserError(
 					errors.New("sources dir is file"),
-					"Selected sources directory is a file.",
+					"Selected sources directory is a file. Please choose a directory instead of a file.",
 				),
 			)
 			os.Exit(1)
@@ -298,7 +298,7 @@ func chooseSources() string {
 				"sources dir exists: %s",
 				userError.NewUserError(
 					errors.New("sources dir exists"),
-					"Selected sources directory already exists.",
+					"Selected sources directory already exists. Please choose a different directory.",
 				),
 			)
 			os.Exit(1)
