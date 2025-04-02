@@ -72,18 +72,22 @@ var deployCmd = &cobra.Command{
 }
 
 func buildFunc(cmd *cobra.Command, args []string) {
+	// Check if the user is logged in
 	commands.CheckLogin()
 	r = commands.NewRest()
 
+	// Get all actions
 	allActions := MustGetActions()
 	var slugs []string
 	for k := range allActions {
 		slugs = append(slugs, k)
 	}
 
+	// Choose the project
 	accountID := config.GetString(config.AccountID)
 	projectSlug = chooseProject(r, accountID, false, slugs)
 
+	// Get project actions
 	actions = mustGetProjectActions(allActions, projectSlug)
 	logrus.Info("\nBuilding actions:")
 	for actionName := range actions.Specs {
@@ -94,6 +98,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		)
 	}
 
+	// Validate the sources directory
 	util.MustExistDir(actions.Sources)
 	if !actionsModel.IsRuntimeSupported(actions.Runtime) {
 		logrus.Error(
@@ -113,6 +118,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 	mustParseAndValidateActions(actions)
 
+	// Check if TypeScript config exists
 	tsConfigExists := util.TsConfigExists(actions.Sources)
 	tsFileExists, tsFile := anyFunctionTsFileExists(actions)
 	if tsFileExists && !tsConfigExists {
@@ -144,6 +150,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	outDir = actions.Sources
 	sourcesDir = actions.Sources
 
+	// Validate package.json dependencies
 	exists := util.PackageJSONExists(actions.Sources)
 	if exists {
 		packageJSON := util.MustLoadPackageJSON(actions.Sources)

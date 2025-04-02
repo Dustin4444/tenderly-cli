@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tenderly/tenderly-cli/commands"
 	actionsModel "github.com/tenderly/tenderly-cli/model/actions"
-	extensionsModel "github.com/tenderly/tenderly-cli/model/extensions"
-	gatewaysModel "github.com/tenderly/tenderly-cli/model/gateways"
+	extensionsModel "github.com.tenderly/tenderly-cli/model/extensions"
+	gatewaysModel "github.com.tenderly/tenderly-cli/rest/gateways"
 	"github.com/tenderly/tenderly-cli/rest"
 	"os"
 	"strings"
@@ -37,13 +37,16 @@ var deployCmd = &cobra.Command{
 }
 
 func deployFunc(cmd *cobra.Command, args []string) {
+	// Check if the user is logged in
 	commands.CheckLogin()
 	r = commands.NewRest()
 
+	// Read extensions from the configuration file
 	configExtensions := ReadExtensionsFromConfig()
 
 	var deploymentTasks []deploymentTask
 	if shouldDeploySingleExtension() {
+		// Validate the required arguments
 		invalidArgs := validateArgs()
 		if len(invalidArgs) > 0 {
 			logrus.Error(commands.Colorizer.Red(fmt.Sprintf("Error deploying extension: missing required flag(s): %s", strings.Join(invalidArgs, ", "))))
@@ -57,6 +60,7 @@ func deployFunc(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 
+		// Initialize project data
 		projectData, err := initProjectData(extensionAccountSlug, extensionProjectSlug)
 		if err != nil {
 			logrus.Error(
@@ -94,6 +98,7 @@ func deployFunc(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	// Execute deployment tasks
 	for _, task := range deploymentTasks {
 		result := task.execute()
 		if result.Success {
@@ -168,22 +173,26 @@ func (dt *deploymentTask) validate() validationResult {
 		Success:      true,
 	}
 
+	// Validate the extension method name
 	if !isMethodNameValid(dt.Extension.MethodName) {
 		result.Success = false
 		result.FailureSlugs = append(result.FailureSlugs, invalidMethodNameSlug)
 	}
 
+	// Check if the method name is available in the backend
 	if !isMethodNameAvailableInBackend(dt.ProjectData.GetExtensions(), dt.Extension.MethodName) {
 		result.Success = false
 		result.FailureSlugs = append(result.FailureSlugs, methodNameInUseSlug)
 	}
 
+	// Check if the action exists
 	extensionAction := dt.ProjectData.FindActionByName(dt.Extension.ActionName)
 	if extensionAction == nil {
 		result.Success = false
 		result.FailureSlugs = append(result.FailureSlugs, actionDoesNotExistSlug)
 	}
 
+	// Check if the action is available
 	if extensionAction != nil && !isActionAvailable(dt.ProjectData.GetExtensions(), extensionAction) {
 		result.Success = false
 		result.FailureSlugs = append(result.FailureSlugs, actionIsInUseSlug)
@@ -198,6 +207,7 @@ func (dt *deploymentTask) execute() extensionDeploymentResult {
 		FailureReasons: make([]string, 0),
 	}
 
+	// Validate the deployment task
 	validationResults := dt.validate()
 	if !validationResults.Success {
 		result.Success = false
@@ -208,12 +218,14 @@ func (dt *deploymentTask) execute() extensionDeploymentResult {
 		return result
 	}
 
+	// Find the action by name
 	extensionAction := dt.ProjectData.FindActionByName(dt.Extension.ActionName)
 	if extensionAction == nil {
 		result.FailureReasons = append(result.FailureReasons, string(actionDoesNotExistSlug))
 		return result
 	}
 
+	// Deploy the extension
 	_, err := r.Extensions.DeployExtension(
 		dt.ProjectData.GetAccountSlug(),
 		dt.ProjectData.GetProjectSlug(),
@@ -242,6 +254,7 @@ func findExtensionByName(extensions []extensionsModel.ConfigExtension, name stri
 }
 
 func getGateway(accountSlug, projectSlug string) (*gatewaysModel.Gateway, error) {
+	// Get the gateway for the project
 	getGatewaysResponse, err := r.Gateways.GetGateways(accountSlug, projectSlug)
 	if err != nil {
 		return nil, err
@@ -257,6 +270,7 @@ func getGateway(accountSlug, projectSlug string) (*gatewaysModel.Gateway, error)
 }
 
 func getActions(accountSlug, projectSlug string) ([]actionsModel.Action, error) {
+	// Get the actions for the project
 	response, err := r.Actions.GetActionsForExtensions(accountSlug, projectSlug)
 	if err != nil {
 		return nil, err
@@ -266,6 +280,7 @@ func getActions(accountSlug, projectSlug string) ([]actionsModel.Action, error) 
 }
 
 func getExtensions(accountSlug, projectSlug, gatewayID string) ([]extensionsModel.BackendExtension, error) {
+	// Get the extensions for the project
 	response, err := r.Extensions.GetExtensions(accountSlug, projectSlug, gatewayID)
 	if err != nil {
 		return nil, err
@@ -275,6 +290,7 @@ func getExtensions(accountSlug, projectSlug, gatewayID string) ([]extensionsMode
 }
 
 func initProjectData(accountSlug, projectSlug string) (ProjectData, error) {
+	// Initialize project data by fetching gateway, actions, and extensions
 	gateway, err := getGateway(accountSlug, projectSlug)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed initializing project data: Failed getting gateway")

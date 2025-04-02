@@ -11,21 +11,28 @@ import (
 	"strconv"
 )
 
+// CheckLogin ensures that the user is logged in before proceeding with any CLI commands.
 func CheckLogin() {
+	// Check if the user is logged in by verifying the configuration.
 	if !config.IsLoggedIn() {
+		// If the user is not logged in, log an error message and exit the program.
 		logrus.Error("In order to use the Tenderly CLI, you need to login first.\n\n",
 			"Please use the ", Colorizer.Bold(Colorizer.Green("tenderly login")), " command to get started.")
 		os.Exit(1)
 	}
 }
 
+// CheckProvider ensures that a valid deployment provider is detected before proceeding with any CLI commands.
 func CheckProvider(deploymentProvider providers.DeploymentProvider) {
+	// Check if the deployment provider is nil, indicating that no valid provider was detected.
 	if deploymentProvider == nil {
+		// If no valid provider is detected, log an error message and exit the program.
 		logrus.Error("Brownie, Hardhat, Buidler, OpenZeppelin or Truffle configuration was not detected.\n\n",
 			"Please re-run this command in a folder where at least one of the frameworks is configured.")
 		os.Exit(1)
 	}
 }
+
 func WriteGlobalConfig() {
 	err := config.WriteGlobalConfig()
 	if err != nil {
